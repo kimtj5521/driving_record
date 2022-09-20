@@ -1,0 +1,6 @@
+##Ignore List
+*.bag
+**.vscode
+**vscode
+.vscode/
+
