@@ -1,2 +1,5 @@
 # subscribe odom topic name
 odom_topic: wheelodom
+
+# recording file save path
+save_path: /home/tjk/catkin_ws/src/driving_record/driving_record.csv
