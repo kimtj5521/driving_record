@@ -4,7 +4,7 @@
     <rosparam command="load" file="$(find driving_record)/config/params.yaml" />
 
     <!-- driving record node -->
-    <node pkg="driving_record" type="driving_record" name="driving_record" output="screen">
+    <node pkg="driving_record" type="driving_record" name="driving_record" output="screen" respawn="true">
     </node>
 
 </launch>

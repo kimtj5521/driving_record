@@ -53,8 +53,8 @@ private:
     float dt = 0.05;
 
     float m_linear_vel_x;
-    float prev_vel_x;
-    float curr_vel_x;
+    float m_prev_odom_time;
+    float m_curr_odom_time;
 
     float m_cumulative_distance_1day;
     float m_cumulative_distance_total;
@@ -102,6 +102,9 @@ drivingRecord::drivingRecord()
 
     m_cumulative_distance_1day = 0.0;
     m_cumulative_time_1day = 0.0;
+
+    m_prev_odom_time = 0.0;
+    m_curr_odom_time = 0.0;
     
     // If there is no file to record, it is created. 
     recordingFile.open(save_path, std::ios::app);
@@ -114,123 +117,6 @@ drivingRecord::drivingRecord()
         }
     }
     recordingFile.close();
-
-    //////////////////////////////////////////////////////////
-
-    m_cumulative_distance_1day = 5.7;
-    m_cumulative_time_1day = 35.6;
-
-    timer = time(NULL);
-    t = localtime(&timer);
-
-    time_sec = t->tm_sec;
-    time_min = t->tm_min;
-    time_hour = t->tm_hour;
-    time_mday = t->tm_mday;
-    time_mon = t->tm_mon + 1;
-    time_year = t->tm_year + 1900;
-
-    // open the file with read & write mode.
-    recordingFile.open(save_path, std::ios::app | std::ios::in);
-
-    // For detect first line end char '#'
-    if(is_first_opened == true){
-        recordingFile.seekg(55, std::ios::beg);
-        is_first_opened = false;
-    }
-
-    getline(recordingFile, buffer);
-    std::cout << "buffer: " << buffer << std::endl;
-
-    std::string str_temp = "#";
-
-    if(buffer.compare(str_temp) == 0){
-        if(fileSize(save_path) == 57){
-            m_cumulative_distance_total = m_cumulative_distance_1day ;
-            m_cumulative_time_total = m_cumulative_time_1day;
-            // recordingFile <<  m_cumulative_time_total << '\n';
-            recordingFile << time_year << "," << time_mon << "," << time_mday << "," << m_cumulative_distance_1day << "," << m_cumulative_distance_total << "," << m_cumulative_time_1day << "," << m_cumulative_time_total << "\n";
-            std::cout << "first write." << std::endl;
-            recordingFile.flush();
-        }
-        else{
-            std::cout << "else" << std::endl;
-            dictionary.clear();
-            
-            while(!recordingFile.eof()){
-                compare_buffer = buffer;
-                getline(recordingFile, buffer);
-                std::cout << "buffer: " << buffer << std::endl;
-                std::cout << "compare_buffer: " << compare_buffer << std::endl;
-            }
-            std::cout << "compare_buffer: " << compare_buffer << std::endl;
-
-            char temp[255];
-            strcpy(temp, compare_buffer.c_str());
-            char *fline = strtok(temp, ",");
-            while (fline != NULL){
-                dictionary.push_back(std::string(fline));
-                fline = strtok(NULL, ",");
-            }
-            // for(auto i: dictionary){
-            //     std::cout << i << std::endl;
-            // }
-
-            int temp_day = std::stoi(dictionary.at(2));
-            int temp_month = std::stoi(dictionary.at(1));
-            int temp_year = std::stoi(dictionary.at(0));
-
-            std::cout << temp_year << "-" << temp_month << "-" << temp_day << std::endl;
-            std::cout << time_year << "-" << time_mon << "-" << time_mday << std::endl;
-            
-            if((temp_day < time_mday) || (temp_month < time_mon) || (temp_year < time_year)){
-                // recordingFile.seekp(0, std::ios::end);
-
-                m_cumulative_distance_total = m_cumulative_distance_1day ;
-                m_cumulative_time_total = m_cumulative_time_1day;
-                // write_input.append(std::to_string(time_year));
-                // write_input.append(",");
-                // write_input.append(std::to_string(time_mon));
-                // write_input.append(",");
-                // write_input.append(std::to_string(time_mday));
-                // write_input.append(",");
-                // write_input.append(std::to_string(m_cumulative_distance_1day));
-                // write_input.append(",");
-                // write_input.append(std::to_string(m_cumulative_distance_total));
-                // write_input.append(",");
-                // write_input.append(std::to_string(m_cumulative_time_1day));
-                // write_input.append(",");
-                // write_input.append(std::to_string(m_cumulative_time_total));
-                // write_input.append("\n");
-
-                recordingFile << time_year << "," << time_mon << "," << time_mday << "," << m_cumulative_distance_1day << "," << m_cumulative_distance_total << "," << m_cumulative_time_1day << "," << std::to_string(m_cumulative_time_total) << '\n';
-                // recordingFile.write(write_input.c_str(), sizeof(write_input.c_str()));
-                std::cout << "new day added" << std::endl;
-                recordingFile.sync();
-                recordingFile.flush();
-            }
-            else if((temp_year == time_year) && (temp_month == time_mon) && (temp_day == time_mday)){
-                // recordingFile.seekp(0, std::ios::end);
-                m_cumulative_distance_total = std::stof(dictionary.at(4)) + m_cumulative_distance_1day;
-                m_cumulative_time_total = std::stof(dictionary.at(6)) + m_cumulative_time_1day;
-
-                std::cout << m_cumulative_distance_total << std::endl;
-                std::cout << m_cumulative_time_total << std::endl;
-
-                if(!recordingFile.bad()){
-                    recordingFile << time_year << "," << time_mon << "," << time_mday << "," << m_cumulative_distance_1day << "," << m_cumulative_distance_total << "," << m_cumulative_time_1day << "," << m_cumulative_time_total << "\n";
-                    std::cout << "good" << std::endl;
-                }
-                
-                std::cout << "today launch again" << std::endl;
-                recordingFile.sync();
-                recordingFile.flush();
-            }            
-        }
-    }
-    
-    recordingFile.close();
-    //////////////////////////////////////////////////////////
 }
 
 drivingRecord::~drivingRecord()
@@ -254,12 +140,15 @@ int32_t drivingRecord::fileSize(std::string fileName)
     struct stat _stat;
     int32_t rc = stat(fileName.c_str(), &_stat);
     std::int32_t returnValue;
-    if(rc == 0){
+    if(rc == 0)
+    {
         returnValue = _stat.st_size;
-    }else{
+    }
+    else
+    {
         returnValue = -1;
     }
-    // std::cout << "fileSize() returnValue: " << returnValue << std::endl;
+
     return returnValue;
 }
 
@@ -269,24 +158,32 @@ void drivingRecord::callbackWheelLinearAngularVelocity(const geometry_msgs::Twis
     if (m_linear_vel_x <0){
         m_linear_vel_x = (-1.0)*m_linear_vel_x;
     }
-    curr_vel_x = m_linear_vel_x;
-    // std::cout << curr_vel_x << std::endl;
+    m_curr_odom_time = ros::Time::now().toSec();
+    // curr_vel_x = m_linear_vel_x;
 }
 
 
 void drivingRecord::run()
 {
-    if(prev_vel_x != curr_vel_x){
-        m_cumulative_distance_1day += curr_vel_x*dt;
+    // if(prev_vel_x != curr_vel_x)
+    if(m_prev_odom_time != m_curr_odom_time)
+    {
+        m_cumulative_distance_1day += m_linear_vel_x*dt;
         m_cumulative_time_1day += dt;
+    }
+    else
+    {
+        m_cumulative_distance_1day = 0.0;
     }
 
     //////////// for test //////////////
-    m_cumulative_distance_1day = 5.7;
-    m_cumulative_time_1day = 35.6;
+    // m_cumulative_distance_1day = 12.54;
+    // m_cumulative_distance_1day = 0.0;
+    // m_cumulative_time_1day = 375.45;
     ////////////////////////////////////
     
-    prev_vel_x = curr_vel_x;
+    m_prev_odom_time = m_curr_odom_time;
+    // prev_vel_x = curr_vel_x;
 
     timer = time(NULL);
     t = localtime(&timer);
@@ -300,103 +197,130 @@ void drivingRecord::run()
 
     if(count%20 == 0){
         // open the file with read & write mode.
-        recordingFile.open(save_path, std::ios::app | std::ios::in);
+        recordingFile.open(save_path, std::ios::out | std::ios::in);
 
         // For detect first line end char '#'
-        if(is_first_opened == true){
-            recordingFile.seekg(55, std::ios::beg);
-            is_first_opened = false;
-        }
-
+        std::string str_temp = "#";
+        recordingFile.seekg(55, std::ios::beg);
+        
+        // read one line
         getline(recordingFile, buffer);
         std::cout << "buffer: " << buffer << std::endl;
 
-        std::string str_temp = "#";
-
-        if(buffer.compare(str_temp) == 0){
-            if(fileSize(save_path) == 57){
-                m_cumulative_distance_total = m_cumulative_distance_1day ;
+        if(buffer.compare(str_temp) == 0)
+        {
+            // If there is only the first line
+            if(fileSize(save_path) == 57)
+            {
+                m_cumulative_distance_total = m_cumulative_distance_1day;
                 m_cumulative_time_total = m_cumulative_time_1day;
-                // recordingFile <<  m_cumulative_time_total << '\n';
-                recordingFile << time_year << "," << time_mon << "," << time_mday << "," << m_cumulative_distance_1day << "," << m_cumulative_distance_total << "," << m_cumulative_time_1day << "," << m_cumulative_time_total << '\n';
+
+                recordingFile.precision(2);
+                recordingFile.setf(std::ios::fixed);
+                recordingFile << time_year << "," 
+                            << time_mon << "," 
+                            << time_mday << "," 
+                            << m_cumulative_distance_1day << "," 
+                            << m_cumulative_distance_total << "," 
+                            << m_cumulative_time_1day << "," 
+                            << m_cumulative_time_total << std::endl;
                 std::cout << "first write." << std::endl;
-                recordingFile.flush();
+            }
+            // If records of different dates already exist
+            else 
+            {
+                std::cout << "else" << std::endl;
+                dictionary.clear();
+                
+                // read line by line to the end of the file
+                // Save the previous line to the compare buffer
+                while(!recordingFile.eof())
+                {
+                    compare_buffer = buffer;
+                    getline(recordingFile, buffer);
+                }
+
+                // Separate by comma and store in vector
+                char temp[255];
+                strcpy(temp, compare_buffer.c_str());
+                char *fline = strtok(temp, ",");
+                while (fline != NULL)
+                {
+                    dictionary.push_back(std::string(fline));
+                    fline = strtok(NULL, ",");
+                }
+
+                // for(auto i: dictionary){
+                //     std::cout << i << std::endl;
+                // }
+
+                compare_time_mday = std::stoi(dictionary.at(2));
+                compare_time_mon = std::stoi(dictionary.at(1));
+                compare_time_year = std::stoi(dictionary.at(0));
+                
+                // Compare the date in the last line with today's date
+                // If today's date is a new day
+                if((compare_time_mday < time_mday) || (compare_time_mon < time_mon) || (compare_time_year < time_year))
+                {
+                    if(buffer.empty())
+                    {
+                        recordingFile.clear();
+                        recordingFile.seekp(0, std::ios::end);
+                        recordingFile.seekg(0, std::ios::end);
+                    }
+
+                    m_cumulative_distance_total = std::stof(dictionary.at(4)) + m_cumulative_distance_1day;
+                    m_cumulative_time_total = std::stof(dictionary.at(6)) + m_cumulative_time_1day;
+
+                    recordingFile.precision(2);
+                    recordingFile.setf(std::ios::fixed);
+                    recordingFile << time_year << "," 
+                                << time_mon << "," 
+                                << time_mday << "," 
+                                << m_cumulative_distance_1day << "," 
+                                << m_cumulative_distance_total << "," 
+                                << m_cumulative_time_1day << "," 
+                                << m_cumulative_time_total << std::endl;
+                    
+                    std::cout << "new day added" << std::endl;
+                }
+                // If you drive again today for the second time or more
+                else if((compare_time_year == time_year) && (compare_time_mon == time_mon) && (compare_time_mday == time_mday))
+                {
+
+                    if(buffer.empty())
+                    {
+                        recordingFile.clear();
+                        recordingFile.seekp(-(compare_buffer.length()+1), std::ios::end);
+                        recordingFile.seekg(-(compare_buffer.length()+1), std::ios::end);
+                    }
+
+                    m_cumulative_distance_1day = std::stof(dictionary.at(3)) + m_cumulative_distance_1day;
+                    m_cumulative_time_1day = std::stof(dictionary.at(5)) + m_cumulative_time_1day;
+
+                    m_cumulative_distance_total = std::stof(dictionary.at(4)) + m_cumulative_distance_1day;
+                    m_cumulative_time_total = std::stof(dictionary.at(6)) + m_cumulative_time_1day;
+
+                    recordingFile.precision(2);
+                    recordingFile.setf(std::ios::fixed);
+                    recordingFile << time_year << "," 
+                                << time_mon << "," 
+                                << time_mday << "," 
+                                << m_cumulative_distance_1day << "," 
+                                << m_cumulative_distance_total << "," 
+                                << m_cumulative_time_1day << "," 
+                                << m_cumulative_time_total << std::endl;
+                    
+                    std::cout << "today launch again" << std::endl;
+                }
             }
         }
-        else{
-            std::cout << "else" << std::endl;
-            dictionary.clear();
-            
-            while(!recordingFile.eof()){
-                compare_buffer = buffer;
-                getline(recordingFile, buffer);
-                std::cout << "buffer: " << buffer << std::endl;
-                std::cout << "compare_buffer: " << compare_buffer << std::endl;
-            }
-            std::cout << "compare_buffer: " << compare_buffer << std::endl;
-
-            char temp[255];
-            strcpy(temp, compare_buffer.c_str());
-            char *fline = strtok(temp, ",");
-            while (fline != NULL){
-                dictionary.push_back(std::string(fline));
-                fline = strtok(NULL, ",");
-            }
-
-            int temp_day = std::stoi(dictionary.at(2));
-            int temp_month = std::stoi(dictionary.at(1));
-            int temp_yaer = std::stoi(dictionary.at(0));
-            
-            if((temp_day < time_mday) || (temp_month < time_mon) || (temp_yaer < time_year)){
-                // recordingFile.seekp(0, std::ios::end);
-
-                m_cumulative_distance_total = m_cumulative_distance_1day ;
-                m_cumulative_time_total = m_cumulative_time_1day;
-                // write_input.append(std::to_string(time_year));
-                // write_input.append(",");
-                // write_input.append(std::to_string(time_mon));
-                // write_input.append(",");
-                // write_input.append(std::to_string(time_mday));
-                // write_input.append(",");
-                // write_input.append(std::to_string(m_cumulative_distance_1day));
-                // write_input.append(",");
-                // write_input.append(std::to_string(m_cumulative_distance_total));
-                // write_input.append(",");
-                // write_input.append(std::to_string(m_cumulative_time_1day));
-                // write_input.append(",");
-                // write_input.append(std::to_string(m_cumulative_time_total));
-                // write_input.append("\n");
-
-                recordingFile << time_year << "," << time_mon << "," << time_mday << "," << m_cumulative_distance_1day << "," << m_cumulative_distance_total << "," << m_cumulative_time_1day << "," << std::to_string(m_cumulative_time_total) << '\n';
-                // recordingFile.write(write_input.c_str(), sizeof(write_input.c_str()));
-                std::cout << "new day added" << std::endl;
-                recordingFile.sync();
-                recordingFile.flush();
-            }
-            else if((temp_yaer == time_year) && (temp_month == time_mon) && (temp_day == time_mday)){
-                // recordingFile.seekp(0, std::ios::end);
-                m_cumulative_distance_total = std::stof(dictionary.at(4)) + m_cumulative_distance_1day;
-                m_cumulative_time_total = std::stof(dictionary.at(6)) + m_cumulative_time_1day;
-                recordingFile << time_year << "," << time_mon << "," << time_mday << "," << m_cumulative_distance_1day << "," << m_cumulative_distance_total << "," << m_cumulative_time_1day << "," << m_cumulative_time_total << '\n';
-                std::cout << "today launch again" << std::endl;
-                recordingFile.sync();
-                recordingFile.flush();
-            }
-            // for(auto i: dictionary){
-            //     std::cout << i << std::endl;
-            // }
-            
-            
-        }
-
         recordingFile.close();
 
         count = 0;
     }
 
     count ++;
-
-    
     
     odom_1Day_msg.data = m_cumulative_distance_1day;
     odom_Total_msg.data = m_cumulative_distance_total;
@@ -407,7 +331,6 @@ void drivingRecord::run()
     odom_Total_pub.publish(odom_Total_msg);
     time_1Day_pub.publish(time_1Day_msg);
     time_Total_pub.publish(time_Total_msg);
-
 }
 
 int main(int argc, char** argv)
@@ -420,7 +343,7 @@ int main(int argc, char** argv)
     while(ros::ok())
     {
         ros::spinOnce();
-        // driving_record.run();
+        driving_record.run();
         loop_rate.sleep();
     }
 
