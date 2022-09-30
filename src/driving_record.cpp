@@ -195,7 +195,8 @@ void drivingRecord::run()
     time_mon = t->tm_mon + 1;
     time_year = t->tm_year + 1900;
 
-    if(count%20 == 0){
+    // Save once every 2 seconds
+    if(count%40 == 0){
         // open the file with read & write mode.
         recordingFile.open(save_path, std::ios::out | std::ios::in);
 
