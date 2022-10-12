@@ -58,6 +58,7 @@ private:
 
     float m_cumulative_distance_1day;
     float m_cumulative_distance_total;
+    float m_cumulative_time;
     float m_cumulative_time_1day;
     float m_cumulative_time_total;
 
@@ -102,6 +103,7 @@ drivingRecord::drivingRecord()
 
     m_cumulative_distance_1day = 0.0;
     m_cumulative_time_1day = 0.0;
+    m_cumulative_time = 0.0;
 
     m_prev_odom_time = 0.0;
     m_curr_odom_time = 0.0;
@@ -165,11 +167,11 @@ void drivingRecord::callbackWheelLinearAngularVelocity(const geometry_msgs::Twis
 
 void drivingRecord::run()
 {
+    // m_cumulative_time += dt;
     // if(prev_vel_x != curr_vel_x)
     if(m_prev_odom_time != m_curr_odom_time)
     {
         m_cumulative_distance_1day += m_linear_vel_x*dt;
-        m_cumulative_time_1day += dt;
     }
     else
     {
@@ -197,6 +199,7 @@ void drivingRecord::run()
 
     // Save once every 2 seconds
     if(count%40 == 0){
+        m_cumulative_time = dt*40.0;
         // open the file with read & write mode.
         recordingFile.open(save_path, std::ios::out | std::ios::in);
 
@@ -206,13 +209,14 @@ void drivingRecord::run()
         
         // read one line
         getline(recordingFile, buffer);
-        std::cout << "buffer: " << buffer << std::endl;
+        // std::cout << "buffer: " << buffer << std::endl;
 
         if(buffer.compare(str_temp) == 0)
         {
             // If there is only the first line
             if(fileSize(save_path) == 57)
             {
+                // m_cumulative_time_1day = m_cumulative_time;
                 m_cumulative_distance_total = m_cumulative_distance_1day;
                 m_cumulative_time_total = m_cumulative_time_1day;
 
@@ -225,12 +229,12 @@ void drivingRecord::run()
                             << m_cumulative_distance_total << "," 
                             << m_cumulative_time_1day << "," 
                             << m_cumulative_time_total << std::endl;
-                std::cout << "first write." << std::endl;
+                // std::cout << "first write." << std::endl;
             }
             // If records of different dates already exist
             else 
             {
-                std::cout << "else" << std::endl;
+                // std::cout << "else" << std::endl;
                 dictionary.clear();
                 
                 // read line by line to the end of the file
@@ -270,6 +274,7 @@ void drivingRecord::run()
                         recordingFile.seekg(0, std::ios::end);
                     }
 
+                    m_cumulative_time_1day = m_cumulative_time;
                     m_cumulative_distance_total = std::stof(dictionary.at(4)) + m_cumulative_distance_1day;
                     m_cumulative_time_total = std::stof(dictionary.at(6)) + m_cumulative_time_1day;
 
@@ -283,7 +288,7 @@ void drivingRecord::run()
                                 << m_cumulative_time_1day << "," 
                                 << m_cumulative_time_total << std::endl;
                     
-                    std::cout << "new day added" << std::endl;
+                    // std::cout << "new day added" << std::endl;
                 }
                 // If you drive again today for the second time or more
                 else if((compare_time_year == time_year) && (compare_time_mon == time_mon) && (compare_time_mday == time_mday))
@@ -296,11 +301,12 @@ void drivingRecord::run()
                         recordingFile.seekg(-(compare_buffer.length()+1), std::ios::end);
                     }
 
+                    // m_cumulative_time_1day = m_cumulative_time;
                     m_cumulative_distance_1day = std::stof(dictionary.at(3)) + m_cumulative_distance_1day;
-                    m_cumulative_time_1day = std::stof(dictionary.at(5)) + m_cumulative_time_1day;
+                    m_cumulative_time_1day = std::stof(dictionary.at(5)) + m_cumulative_time;
 
                     m_cumulative_distance_total = std::stof(dictionary.at(4)) + m_cumulative_distance_1day;
-                    m_cumulative_time_total = std::stof(dictionary.at(6)) + m_cumulative_time_1day;
+                    m_cumulative_time_total = std::stof(dictionary.at(6)) + m_cumulative_time;
 
                     recordingFile.precision(2);
                     recordingFile.setf(std::ios::fixed);
@@ -312,8 +318,9 @@ void drivingRecord::run()
                                 << m_cumulative_time_1day << "," 
                                 << m_cumulative_time_total << std::endl;
                     
-                    std::cout << "today launch again" << std::endl;
+                    // std::cout << "today launch again" << std::endl;
                 }
+                // std::cout << "1day time: " << m_cumulative_time_1day << std::endl;
             }
         }
         recordingFile.close();
