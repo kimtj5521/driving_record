@@ -280,7 +280,9 @@ void drivingRecord::run()
                     }
 
                     m_cumulative_time_1day = m_cumulative_time;
-                    m_cumulative_distance_total = std::stof(dictionary.at(4)) + m_cumulative_distance_1day;
+                    if(prev_vel_x != curr_vel_x){
+                        m_cumulative_distance_total = std::stof(dictionary.at(4)) + m_cumulative_distance_1day;
+                    }                    
                     m_cumulative_time_total = std::stof(dictionary.at(6)) + m_cumulative_time_1day;
 
                     recordingFile.precision(2);
@@ -307,10 +309,12 @@ void drivingRecord::run()
                     }
 
                     // m_cumulative_time_1day = m_cumulative_time;
-                    m_cumulative_distance_1day = std::stof(dictionary.at(3)) + m_cumulative_distance_1day;
+                    if(prev_vel_x != curr_vel_x){
+                        m_cumulative_distance_1day = std::stof(dictionary.at(3)) + m_cumulative_distance_1day;
+                        m_cumulative_distance_total = std::stof(dictionary.at(4)) + m_cumulative_distance_1day;
+                    }
+                    
                     m_cumulative_time_1day = std::stof(dictionary.at(5)) + m_cumulative_time;
-
-                    m_cumulative_distance_total = std::stof(dictionary.at(4)) + m_cumulative_distance_1day;
                     m_cumulative_time_total = std::stof(dictionary.at(6)) + m_cumulative_time;
 
                     recordingFile.precision(2);
