@@ -178,10 +178,10 @@ void drivingRecord::run()
     {
         m_cumulative_distance_1day += m_linear_vel_x*dt;
     }
-    else
-    {
-        m_cumulative_distance_1day = 0.0;
-    }
+    // else
+    // {
+    //     m_cumulative_distance_1day = 0.0;
+    // }
 
     //////////// for test //////////////
     // m_cumulative_distance_1day = 12.54;

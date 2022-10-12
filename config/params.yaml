@@ -2,5 +2,5 @@
 odom_topic: wheelodom
 
 # recording file save path
-save_path: /home/etri/driving_record/driving_record.csv
-# save_path: /home/tjk-msi/catkin_ws/src/driving_record/driving_record.csv
+# save_path: /home/etri/driving_record/driving_record.csv
+save_path: /home/tjk-msi/catkin_ws/src/driving_record/driving_record.csv
