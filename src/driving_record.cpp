@@ -165,8 +165,8 @@ void drivingRecord::callbackWheelLinearAngularVelocity(const geometry_msgs::Twis
     if (m_linear_vel_x <0){
         m_linear_vel_x = (-1.0)*m_linear_vel_x;
     }
-    m_curr_odom_time = ros::Time::now().toSec();
-    // curr_vel_x = m_linear_vel_x;
+    // m_curr_odom_time = ros::Time::now().toSec();
+    curr_vel_x = m_linear_vel_x;
 }
 
 
@@ -327,6 +327,7 @@ void drivingRecord::run()
                 }
                 // std::cout << "1day time: " << m_cumulative_time_1day << std::endl;
             }
+            std::cout << "odom 1day: " << m_cumulative_distance_1day << std::endl;
         }
         recordingFile.close();
 
