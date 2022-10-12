@@ -55,6 +55,8 @@ private:
     float m_linear_vel_x;
     float m_prev_odom_time;
     float m_curr_odom_time;
+    float prev_vel_x;
+    float curr_vel_x;
 
     float m_cumulative_distance_1day;
     float m_cumulative_distance_total;
@@ -107,6 +109,9 @@ drivingRecord::drivingRecord()
 
     m_prev_odom_time = 0.0;
     m_curr_odom_time = 0.0;
+
+    prev_vel_x = 0.0;
+    curr_vel_x = 0.0;
     
     // If there is no file to record, it is created. 
     recordingFile.open(save_path, std::ios::app);
@@ -168,8 +173,8 @@ void drivingRecord::callbackWheelLinearAngularVelocity(const geometry_msgs::Twis
 void drivingRecord::run()
 {
     // m_cumulative_time += dt;
-    // if(prev_vel_x != curr_vel_x)
-    if(m_prev_odom_time != m_curr_odom_time)
+    if(prev_vel_x != curr_vel_x)
+    // if(m_prev_odom_time != m_curr_odom_time)
     {
         m_cumulative_distance_1day += m_linear_vel_x*dt;
     }
@@ -184,8 +189,8 @@ void drivingRecord::run()
     // m_cumulative_time_1day = 375.45;
     ////////////////////////////////////
     
-    m_prev_odom_time = m_curr_odom_time;
-    // prev_vel_x = curr_vel_x;
+    // m_prev_odom_time = m_curr_odom_time;
+    prev_vel_x = curr_vel_x;
 
     timer = time(NULL);
     t = localtime(&timer);
